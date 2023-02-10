@@ -5,7 +5,7 @@ class MotorDriver:
     """! @brief The DC motor is powered by an external 12V supply. The STM32
     provides a PWM signal that is then turned into -12 to +12V.
     """
-    def __init__(self, en_pin, in1pin, in2pin, timer, timerCh1, timerCh2):
+    def __init__(self, en_pin, in1, in2, timer_num, timerCh1, timerCh2):
         """! The initialization sets up the output pins and PWM channel.
         @param in1pin: Channel 1 on pin 1 is used for PWM forward.
         @param in2pin: Channel 2 on pin 2 is used for PWM reverse.
@@ -14,14 +14,12 @@ class MotorDriver:
         is an internal fault detected. The input pin will convey the news to the MCU.
         @param timer: The motor receives a functioning timer channel to use.
         """
-        motorpin1 = pyb.Pin(in1pin, pyb.Pin.OUT_PP)
-        motorpin2 = pyb.Pin(in2pin, pyb.Pin.OUT_PP)
-        enablepin = pyb.Pin(en_pin, pyb.Pin.IN, pyb.Pin.PULL_UP)
-
-        self.internaltimer = timer
-
-        self.ch1 = timer.channel(timerCh1, pyb.Timer.PWM, pin=motorpin1)
-        self.ch2 = timer.channel(timerCh2, pyb.Timer.PWM, pin=motorpin2)
+        self.enapin = pyb.Pin(en_pin, pyb.Pin.IN, pyb.Pin.PULL_UP)
+        self.in1pin = pyb.Pin(in1, pyb.Pin.OUT_PP)
+        self.in2pin = pyb.Pin(in2, pyb.Pin.OUT_PP)
+        self.timer = pyb.Timer(timer_num, freq=20000)
+        self.ch1 = self.timer.channel(timerCh1, pyb.Timer.PWM, pin=self.in1pin)
+        self.ch2 = self.timer.channel(timerCh2, pyb.Timer.PWM, pin=self.in2pin)
         #print("Creating a motor driver")
 
     def set_duty_cycle(self, level):

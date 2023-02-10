@@ -48,7 +48,6 @@ def plotter():
     with(serial.Serial(COMPORT, 115200, timeout = 10) as ser):
         expectedLength = ser.readline().strip()
         KPused = ser.readline().strip()
-        print(expectedLength)
         for i in range(int(expectedLength)):
             newline = ser.readline().strip().split(b',')
             # try to convert each line into numbers
