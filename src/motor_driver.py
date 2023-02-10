@@ -5,7 +5,7 @@ class MotorDriver:
     """! @brief The DC motor is powered by an external 12V supply. The STM32
     provides a PWM signal that is then turned into -12 to +12V.
     """
-    def __init__(self, en_pin, in1pin, in2pin, timer):
+    def __init__(self, en_pin, in1pin, in2pin, timer, timerCh1, timerCh2):
         """! The initialization sets up the output pins and PWM channel.
         @param in1pin: Channel 1 on pin 1 is used for PWM forward.
         @param in2pin: Channel 2 on pin 2 is used for PWM reverse.
@@ -20,8 +20,8 @@ class MotorDriver:
 
         self.internaltimer = timer
 
-        self.ch1 = timer.channel(1, pyb.Timer.PWM, pin=motorpin1)
-        self.ch2 = timer.channel(2, pyb.Timer.PWM, pin=motorpin2)
+        self.ch1 = timer.channel(timerCh1, pyb.Timer.PWM, pin=motorpin1)
+        self.ch2 = timer.channel(timerCh2, pyb.Timer.PWM, pin=motorpin2)
         #print("Creating a motor driver")
 
     def set_duty_cycle(self, level):

@@ -6,7 +6,7 @@ class EncoderReader:
     encoder uses two channels to capture changes in position.
     """
 
-    def __init__(self, pin1, pin2, position, timer, chan1, chan2, old_count):
+    def __init__(self, pin1, pin2, timer, chan1, chan2):
         """! Initialization takes in the pins and sets the initial position to a
         received value.
         @param pin1: Pin 1 is used for encoder channel A.
