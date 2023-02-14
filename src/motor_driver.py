@@ -28,12 +28,13 @@ class MotorDriver:
         @param level: Level is the requested speed and direction.
         """
         if level <= 0:
-            level = -1 * level
-            self.ch1.pulse_width_percent(level)
+            self.level = -1 * level
+            self.ch1.pulse_width_percent(self.level)
             self.ch2.pulse_width_percent(0)
         else:
+            self.level = level
             self.ch1.pulse_width_percent(0)
-            self.ch2.pulse_width_percent(level)
+            self.ch2.pulse_width_percent(self.level)
             #print(f"Setting duty cycle to {level}")
 
 

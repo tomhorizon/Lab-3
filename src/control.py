@@ -11,9 +11,9 @@ class Control:
         """
 
     def run(self, pos):
-        error = self.setpt - pos
-        psi = -self.kp*error
-        return psi
+        self.error = self.setpt - pos
+        self.psi = -self.kp*self.error
+        return self.psi
         """! The run method takes in the current motor position and calculates and scales the error to ouput the
             necessary motor effort.
         @param pos: pos is the current motor position as read by the encoder
