@@ -4,41 +4,42 @@ from motor_driver import MotorDriver
 from encoder_reader import EncoderReader
 from control import Control
 import cotask
+import task_share
 
-# motor constants
-motor1Pin1 = pyb.Pin.board.PB4
-motor1Pin2 = pyb.Pin.board.PB5
-motor1Ena = pyb.Pin.board.PA10
-motor1Tim = 3
-motor1Ch1 = 1
-motor1Ch2 = 2
-
-motor2Pin1 = pyb.Pin.board.PA0
-motor2Pin2 = pyb.Pin.board.PA1
-motor2Ena = pyb.Pin.board.PC1
-motor2Tim = 5
-motor2Ch1 = 1
-motor2Ch2 = 2
-
-# encoder constants
-encoder1Pin1 = pyb.Pin.board.PB6
-encoder1Pin2 = pyb.Pin.board.PB7
-encoder1Tim = 4
-encoder1Ch1 = 1
-encoder1Ch2 = 2
-encoder2Pin1 = pyb.Pin.board.PC6
-encoder2Pin2 = pyb.Pin.board.PC7
-encoder2Tim = 8
-encoder2Ch1 = 1
-encoder2Ch2 = 2
 
 # initialize motors and encoder objects
 
 def motor1task(shares):
+    
+    # motor constants
+    motor1Pin1 = pyb.Pin.board.PB4
+    motor1Pin2 = pyb.Pin.board.PB5
+    motor1Ena = pyb.Pin.board.PA10
+    motor1Tim = 3
+    motor1Ch1 = 1
+    motor1Ch2 = 2
+    
+    # encoder constants
+    encoder1Pin1 = pyb.Pin.board.PB6
+    encoder1Pin2 = pyb.Pin.board.PB7
+    encoder1Tim = 4
+    encoder1Ch1 = 1
+    encoder1Ch2 = 2
+    
+    print("Pins Setup 1")
+    
     kp, setpoint = shares
+    
     motor1 = MotorDriver(motor1Ena, motor1Pin1, motor1Pin2, motor1Tim, motor1Ch1, motor1Ch2)
     encoder1 = EncoderReader(encoder1Pin1, encoder1Pin2, encoder1Tim, encoder1Ch1, encoder1Ch2)
     control1 = Control(kp.get(), setpoint.get())
+    #control1 = Control(a, b)
+
+    
+    print("Motor/Enc Init 1")
+
+    
+    encoder1.zero()
     
     while True:
         pos1 = encoder1.read()
@@ -48,10 +49,32 @@ def motor1task(shares):
 
 def motor2task(shares):
     
+    # motor constants
+    motor2Pin1 = pyb.Pin.board.PA0
+    motor2Pin2 = pyb.Pin.board.PA1
+    motor2Ena = pyb.Pin.board.PC1
+    motor2Tim = 5
+    motor2Ch1 = 1
+    motor2Ch2 = 2
+    
+    # encoder constants
+    encoder2Pin1 = pyb.Pin.board.PC6
+    encoder2Pin2 = pyb.Pin.board.PC7
+    encoder2Tim = 8
+    encoder2Ch1 = 1
+    encoder2Ch2 = 2
+    
+    print("Pins Setup 1")
+    
     kp, setpoint = shares
     motor2 = MotorDriver(motor2Ena, motor2Pin1, motor2Pin2, motor2Tim, motor2Ch1, motor2Ch2)
     encoder2 = EncoderReader(encoder2Pin1, encoder2Pin2, encoder2Tim, encoder2Ch1, encoder2Ch2)
+    
     control2 = Control(kp.get(), setpoint.get())
+    
+    print("Motor/Enc Init 2")
+
+    encoder2.zero()
     
     while True:
         pos2 = encoder2.read()
@@ -61,42 +84,64 @@ def motor2task(shares):
     
     
 def setup():
+    # Create a share and a queue to test function and diagnostic printouts
+    share0 = task_share.Share('f', thread_protect=False, name="Share 0")
+    share1 = task_share.Share('h', thread_protect=False, name="Share 1")
+    share2 = task_share.Share('f', thread_protect=False, name="Share 2")
+    share3 = task_share.Share('h', thread_protect=False, name="Share 3")
+
+    q0 = task_share.Queue('L', 16, thread_protect=False, overwrite=False,
+                          name="Queue 0")
+    
     task_1 = cotask.Task (motor1task, name = "Control Motor 1",
-                          priority = 1, period = 10, profile = True)
+                          priority = 1, period = 10, profile = True, trace=False, shares=(share0, share1))
     task_2 = cotask.Task (motor2task, name = "Control Motor 2",
-                          priority = 1, period = 10, profile = True)
+                          priority = 1, period = 10, profile = True,trace=False, shares=(share2, share3))
     cotask.task_list.append (task_1)
     cotask.task_list.append (task_2)
     
-def main():
+    return share0, share1, share2, share3
+    
+
+    
+def main(a, b, c, d):
     ser = pyb.UART(2, baudrate=115200, timeout = 10)
     while(not ser.any()):
         #print("No data")
         pyb.delay(100)
         pass
+    
+
+    
     setPoint1 = int(ser.readline().strip())
     setPoint2 = int(ser.readline().strip())
     KP1 = float(ser.readline().strip())
     KP2 = float(ser.readline().strip())
     
+    a.put(KP1)
+    b.put(setPoint1)
+    c.put(KP2)
+    d.put(setPoint2)
+    
     print(f'{setPoint1}, {KP1}, {setPoint2}, {KP2}')
     pyb.delay(1000)
-    encoder1.zero()
-    encoder2.zero()
+
     t = []
     y1 = []
     y2 = []
     elapsed = 0
     startTime = utime.ticks_ms()
-
+    
+    print("Entering Control Loop")
     while elapsed < 3000:
         currentTime = utime.ticks_ms()
         elapsed = currentTime - startTime
         t.append(elapsed)
         cotask.task_list.pri_sched ()
-        
-    motor1.set_duty_cycle(0)
-    motor2.set_duty_cycle(0)
+    
+    print("Control Loop Complete")
+    #motor1.set_duty_cycle(0)
+    #motor2.set_duty_cycle(0)
 
     ser.write(f'{len(y1)}\r\n')
     ser.write(f'{KP1}\r\n')
@@ -105,7 +150,7 @@ def main():
         ser.write(f'{t[i]}, {y1[i]}, {y2[i]}\r\n')  
     print("sent")
     
-while True:
-    setup()
+if __name__ == "__main__":
+    a,b,c,d = setup()
     while True:
-        main()
+        main(a, b, c, d)

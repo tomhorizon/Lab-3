@@ -96,6 +96,7 @@ class Task:
         # The function which is run to implement this task's code. Since it 
         # is a generator, we "run" it here, which doesn't actually run it but
         # gets it going as a generator which is ready to yield values
+        print("Init Task")
         if shares:
             self._run_gen = run_fun(shares)
         else:
@@ -387,6 +388,8 @@ class TaskList:
         calls that task's @c run() method.
         """
         # Go down the list of priorities, beginning with the highest
+        
+        print("pri_list run")
         for pri in self.pri_list:
             # Within each priority list, run tasks in round-robin order
             # Each priority list is [priority, index, task, task, ...] where
