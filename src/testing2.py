@@ -26,26 +26,24 @@ def motor1task(shares):
     encoder1Ch1 = 1
     encoder1Ch2 = 2
     
-    print("Pins Setup 1")
-    
-    kp, setpoint = shares
+    kp, setpoint, time, position = shares
     
     motor1 = MotorDriver(motor1Ena, motor1Pin1, motor1Pin2, motor1Tim, motor1Ch1, motor1Ch2)
     encoder1 = EncoderReader(encoder1Pin1, encoder1Pin2, encoder1Tim, encoder1Ch1, encoder1Ch2)
     control1 = Control(kp.get(), setpoint.get())
-    #control1 = Control(a, b)
-
-    
-    print("Motor/Enc Init 1")
-
     
     encoder1.zero()
     
+    
+    begin = utime.ticks_ms()
     while True:
         pos1 = encoder1.read()
         psi = control1.run(pos1)
         motor1.set_duty_cycle(psi)
-        yield pos1
+        
+        time.put(utime.ticks_ms() - begin)
+        position.put(pos1)
+        yield 0
 
 def motor2task(shares):
     
@@ -64,55 +62,53 @@ def motor2task(shares):
     encoder2Ch1 = 1
     encoder2Ch2 = 2
     
-    print("Pins Setup 1")
-    
-    kp, setpoint = shares
+    kp, setpoint, position = shares
     motor2 = MotorDriver(motor2Ena, motor2Pin1, motor2Pin2, motor2Tim, motor2Ch1, motor2Ch2)
     encoder2 = EncoderReader(encoder2Pin1, encoder2Pin2, encoder2Tim, encoder2Ch1, encoder2Ch2)
     
     control2 = Control(kp.get(), setpoint.get())
-    
-    print("Motor/Enc Init 2")
-
     encoder2.zero()
     
     while True:
         pos2 = encoder2.read()
         psi = control2.run(pos2)
         motor2.set_duty_cycle(psi)
-        yield pos2
-    
+        position.put(pos2)
+        yield 0
     
 def setup():
     # Create a share and a queue to test function and diagnostic printouts
-    share0 = task_share.Share('f', thread_protect=False, name="Share 0")
-    share1 = task_share.Share('h', thread_protect=False, name="Share 1")
-    share2 = task_share.Share('f', thread_protect=False, name="Share 2")
-    share3 = task_share.Share('h', thread_protect=False, name="Share 3")
-
-    q0 = task_share.Queue('L', 16, thread_protect=False, overwrite=False,
-                          name="Queue 0")
+    share0 = task_share.Share('f', thread_protect=False, name="KP 1")
+    share1 = task_share.Share('h', thread_protect=False, name="Setpoint 1")
+    share2 = task_share.Share('f', thread_protect=False, name="KP 2")
+    share3 = task_share.Share('h', thread_protect=False, name="Setpoint 2")
+    queue0 = task_share.Queue('l', 1000, thread_protect=False, overwrite=True, name="Time data")
+    queue1 = task_share.Queue('l', 1000, thread_protect=False, overwrite=True, name="Motor 1 position")
+    queue2 = task_share.Queue('l', 1000, thread_protect=False, overwrite=True, name="Motor 2 position")
     
+    queue0.clear()
+    queue1.clear()
+    queue2.clear()
+
     task_1 = cotask.Task (motor1task, name = "Control Motor 1",
-                          priority = 1, period = 10, profile = True, trace=False, shares=(share0, share1))
+                          priority = 1, period = 10, profile = True, trace=False, shares=(share0, share1, queue0, queue1))
     task_2 = cotask.Task (motor2task, name = "Control Motor 2",
-                          priority = 1, period = 10, profile = True,trace=False, shares=(share2, share3))
+                          priority = 1, period = 10, profile = True,trace=False, shares=(share2, share3, queue2))
     cotask.task_list.append (task_1)
     cotask.task_list.append (task_2)
     
-    return share0, share1, share2, share3
+    return share0, share1, share2, share3, queue0, queue1, queue2 
     
 
     
-def main(a, b, c, d):
+def main(a, b, c, d, e, f, g):
+    print("Waiting for parameters from PC.")
     ser = pyb.UART(2, baudrate=115200, timeout = 10)
     while(not ser.any()):
         #print("No data")
         pyb.delay(100)
         pass
-    
 
-    
     setPoint1 = int(ser.readline().strip())
     setPoint2 = int(ser.readline().strip())
     KP1 = float(ser.readline().strip())
@@ -133,24 +129,25 @@ def main(a, b, c, d):
     startTime = utime.ticks_ms()
     
     print("Entering Control Loop")
-    while elapsed < 3000:
+    while elapsed < 1000:
         currentTime = utime.ticks_ms()
         elapsed = currentTime - startTime
-        t.append(elapsed)
         cotask.task_list.pri_sched ()
     
     print("Control Loop Complete")
     #motor1.set_duty_cycle(0)
     #motor2.set_duty_cycle(0)
 
-    ser.write(f'{len(y1)}\r\n')
     ser.write(f'{KP1}\r\n')
     ser.write(f'{KP2}\r\n')
-    for i in range(0, len(y1)):  
-        ser.write(f'{t[i]}, {y1[i]}, {y2[i]}\r\n')  
+    ser.write(f'{e.num_in()}\r\n')
+    
+    while e.empty() == 0:
+        ser.write(f'{e.get()}, {f.get()}, {g.get()}\r\n')
     print("sent")
+    ser.write("done")
     
 if __name__ == "__main__":
-    a,b,c,d = setup()
     while True:
-        main(a, b, c, d)
+        a,b,c,d,e,f,g = setup()
+        main(a,b,c,d,e,f,g)

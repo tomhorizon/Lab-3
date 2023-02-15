@@ -45,11 +45,11 @@ def plotter():
     y1_values = []
     y2_values = []
     with(serial.Serial(COMPORT, 115200, timeout = 10) as ser):
-        expectedLength = ser.readline().strip()
         KPused1 = ser.readline().strip()
         KPused2 = ser.readline().strip()
-
-        for i in range(int(expectedLength)):
+        incoming = ser.readline().strip()
+        print(incoming)
+        for i in range(int(incoming)):
             newline = ser.readline().strip().split(b',')
             # try to convert each line into numbers
             try:
@@ -57,6 +57,7 @@ def plotter():
                 y1 = float(newline[1])
                 y2 = float(newline[2])
 
+                #print(f"{x}, {y1}, {y2}")
                 # only if both numbers are converted do they append
                 x_values.append(x)
                 y1_values.append(y1)
@@ -64,7 +65,9 @@ def plotter():
             except ValueError:
                 pass
 
+
     # plot, label, and display - fun stuff found at:
+    print("Plotting...")
     plt.plot(x_values, y1_values, 'k', label = "KP1 of " + str(float(KPused1)))
     plt.plot(x_values, y2_values, 'g', label = "KP2 of " + str(float(KPused2)))
     plt.minorticks_on()
@@ -77,5 +80,6 @@ def plotter():
     plt.show()
 
 if __name__ == "__main__":
-    userEntry()
-    plotter()
+    while True:
+        userEntry()
+        plotter()
