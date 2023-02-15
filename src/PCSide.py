@@ -66,6 +66,7 @@ def plotter():
             except ValueError:
                 pass
 
+    print(x_values)
 
     # plot, label, and display - fun stuff found at:
     print("Plotting...")
