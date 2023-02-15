@@ -21,7 +21,7 @@ from matplotlib import pyplot as plt
 # adjust as needed for your computer
 # tom           - COM8
 # jonathan      - COM6
-COMPORT = 'COM8'
+COMPORT = 'COM6'
 ls = "\r\n".encode()
 
 def userEntry():
@@ -30,12 +30,13 @@ def userEntry():
     setpoint2 = input("Enter setpoint for motor 2: ").encode()
     KP1 = input("Enter KP 1: ").encode()
     KP2 = input("Enter KP 2: ").encode()
+    period = input("Enter Period: ").encode()
 
     # send user parameters
     with serial.Serial(COMPORT, 115200, timeout=10) as s_port:
         s_port.write(setpoint1 + ls +
                      setpoint2 + ls +
-                     KP1 + ls + KP2)
+                     KP1 + ls + KP2 + ls + period)
     print("Parameters Sent")
 
 # read the resulting data,

@@ -91,9 +91,9 @@ def setup():
     queue2.clear()
 
     task_1 = cotask.Task (motor1task, name = "Control Motor 1",
-                          priority = 1, period = 10, profile = True, trace=False, shares=(share0, share1, queue0, queue1))
+                          priority = 1, period = 20, profile = True, trace=False, shares=(share0, share1, queue0, queue1))
     task_2 = cotask.Task (motor2task, name = "Control Motor 2",
-                          priority = 1, period = 10, profile = True,trace=False, shares=(share2, share3, queue2))
+                          priority = 1, period = 20, profile = True,trace=False, shares=(share2, share3, queue2))
     cotask.task_list.append (task_1)
     cotask.task_list.append (task_2)
     
@@ -129,7 +129,7 @@ def main(a, b, c, d, e, f, g):
     startTime = utime.ticks_ms()
     
     print("Entering Control Loop")
-    while elapsed < 1000:
+    while elapsed < 500:
         currentTime = utime.ticks_ms()
         elapsed = currentTime - startTime
         cotask.task_list.pri_sched ()
