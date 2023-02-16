@@ -1,9 +1,12 @@
 """!
 @file lab3main.py
 
-This file is Lab 3 for ME 405. The goal of this exercise was to control a 12V
-DC motor system as a servo system with a proportional controller. The motor is
-connected to an external power supply and a STM32 PWM output. The built-in encoder
+This file is Lab 3 for ME 405. The goal of this exercise was to simultaneously control two 12V
+DC motor system as individual servos with proportional controllers using a real-time scheduler.
+The scheduler allows us to use multitasking by scheduling the sequence in which tasks are carried
+out in correspondance to the preset frequency.
+
+The motors are connected to an external power supply and a STM32 PWM output. The built-in encoder
 provides position feedback and uses STM-32 timers. At the beginning of the
 program sequence, controller parameters are sent through UART serial communication
 to the STM32, initializing the control algorithm.
@@ -23,8 +26,8 @@ Once the controller parameters (Kp and setpt) are received from the PC. The enco
 reads the position, which is used by the controller to calculate the required duty
 cycle, which is applied to the motor. This loop runs for 3 seconds.
 
-Unlike last lab though, we used Dr. Ridgley's cotask class and functions to implement
-multitasking. This allowed us to accomplish the above tasks on two motors simultaneously.
+Dr. Ridgley's cotask class and functions are used to implement multitasking. This allowed us to
+accomplish the above tasks on two motors simultaneously.
 
 @author Tom Taylor
 @author Jonathan Fraser
